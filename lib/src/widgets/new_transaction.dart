@@ -56,15 +56,17 @@ class _NewTransactionState extends State<NewTransaction> {
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.end,
-        children: [
-          _buildTitleInput(),
-          _buildAmountInput(),
-          _buildDatePicker(context),
-          _buildSubmitButton(context),
-        ],
+    return SingleChildScrollView(
+      child: Card(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.end,
+          children: [
+            _buildTitleInput(),
+            _buildAmountInput(),
+            _buildDatePicker(context),
+            _buildSubmitButton(context),
+          ],
+        ),
       ),
     );
   }

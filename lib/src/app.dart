@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 
 import 'widgets/new_transaction.dart';
@@ -31,6 +33,7 @@ class _AppState extends State<App> {
       ),
     ),
   ];
+  bool _showChart = true;
 
   List<Transaction> get _recentTransactions {
     return _transactions
@@ -62,12 +65,21 @@ class _AppState extends State<App> {
   }
 
   void _showNewTransactionForm(BuildContext ctx) {
+    NewTransaction newTx = NewTransaction(addTransaction: _addNewTransaction);
+    var media = MediaQuery.of(ctx);
     showModalBottomSheet(
+        isScrollControlled: true,
         context: ctx,
         builder: (_) {
           return GestureDetector(
             onTap: () {},
-            child: NewTransaction(addTransaction: _addNewTransaction),
+            child: Padding(
+              padding: EdgeInsets.only(
+                // top: media.size.height * 0.25,
+                bottom: media.viewInsets.bottom + (media.size.height * 0.40),
+              ),
+              child: newTx,
+            ),
             behavior: HitTestBehavior.opaque,
           );
         });
@@ -78,30 +90,32 @@ class _AppState extends State<App> {
     return MaterialApp(
       theme: _appTheme(),
       home: Builder(builder: (context) {
+        final myAppBar = AppBar(
+          title: const Text('Expense Tracker'),
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.add),
+              onPressed: () => _showNewTransactionForm(context),
+            ),
+          ],
+        );
+        final mediaQuery = MediaQuery.of(context);
+        final remainingHeight = mediaQuery.size.height -
+            myAppBar.preferredSize.height -
+            mediaQuery.padding.top -
+            40;
+        final orientantion = mediaQuery.orientation;
         return Scaffold(
-          appBar: AppBar(
-            title: const Text('Expense Tracker'),
-            actions: [
-              IconButton(
-                icon: const Icon(Icons.add),
-                onPressed: () => _showNewTransactionForm(context),
-              ),
-            ],
-          ),
-          body: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Chart(recentTransactions: _recentTransactions),
-              TransactionList(
-                transactions: _transactions,
-                removeTransaction: _removeTransaction,
-              ),
-            ],
-          ),
-          floatingActionButton: FloatingActionButton(
-            onPressed: () => _showNewTransactionForm(context),
-            child: const Icon(Icons.add),
-          ),
+          appBar: myAppBar,
+          body: orientantion == Orientation.portrait
+              ? _buildPortraitLayout(remainingHeight)
+              : _buildLandscapeLayout(remainingHeight),
+          floatingActionButton: Platform.isIOS
+              ? null
+              : FloatingActionButton(
+                  onPressed: () => _showNewTransactionForm(context),
+                  child: const Icon(Icons.add),
+                ),
         );
       }),
     );
@@ -117,6 +131,10 @@ class _AppState extends State<App> {
       errorColor: Colors.red.shade300,
       fontFamily: 'Quicksand',
       textTheme: ThemeData.light().textTheme.copyWith(
+            labelMedium: const TextStyle(
+              fontFamily: 'OpenSans',
+              fontSize: 14,
+            ),
             headline6: const TextStyle(
               fontFamily: 'OpenSans',
               fontWeight: FontWeight.bold,
@@ -143,6 +161,66 @@ class _AppState extends State<App> {
             )
             .headline6,
       ),
+    );
+  }
+
+  Widget _buildPortraitLayout(double remainingHeight) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        SizedBox(
+          height: remainingHeight * .32,
+          child: Chart(recentTransactions: _recentTransactions),
+        ),
+        Expanded(
+          child: SizedBox(
+            height: remainingHeight * .68,
+            child: TransactionList(
+              transactions: _transactions,
+              removeTransaction: _removeTransaction,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildLandscapeLayout(double remainingHeight) {
+    const double switchHeight = 40;
+    final Widget chartSwitch = SizedBox(
+      height: switchHeight,
+      width: double.infinity,
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Text('Show ${_showChart ? 'List' : 'Chart'}',
+              style: Theme.of(context).textTheme.labelMedium),
+          Switch.adaptive(
+            value: _showChart,
+            activeColor: Theme.of(context).colorScheme.primary,
+            activeTrackColor: Theme.of(context).colorScheme.secondary,
+            onChanged: (val) => setState(() => _showChart = val),
+          ),
+        ],
+      ),
+    );
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        chartSwitch,
+        _showChart
+            ? SizedBox(
+                height: (remainingHeight - switchHeight) * 0.9,
+                child: Chart(recentTransactions: _recentTransactions),
+              )
+            : SizedBox(
+                height: remainingHeight - switchHeight,
+                child: TransactionList(
+                  transactions: _transactions,
+                  removeTransaction: _removeTransaction,
+                ),
+              ),
+      ],
     );
   }
 }

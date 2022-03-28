@@ -59,17 +59,17 @@ class Chart extends StatelessWidget {
                 ),
               ),
             ),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: groupedTransactionValues
-                  .map((e) => Flexible(
-                        fit: FlexFit.tight,
-                        child: ChartBar(
+            Flexible(
+              flex: 1,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                children: groupedTransactionValues
+                    .map((e) => ChartBar(
                           recentExpense: e,
                           weeklySpending: totalSpending,
-                        ),
-                      ))
-                  .toList(),
+                        ))
+                    .toList(),
+              ),
             ),
             Container(
               width: double.infinity,
